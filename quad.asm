@@ -7,7 +7,7 @@
 SQUARE_LENGTH EQU 80
 SQUARE_HEIGHT EQU 50
 
-QUAD    DD
+VIDEO_CARD_SEGMENT EQU 0A000H
 
 .code
 
@@ -17,27 +17,28 @@ QUAD    DD
         push CX
         push DI
         push ES
-        
-        MOV BX, 0A000H
+        ; ELE ESCREVE 2 bytes por vez
+        MOV BX, VIDEO_CARD_SEGMENT
         MOV ES, BX
         MOV AH, AL
-        MOV CX, 40
-        MOV BX, 50
-    DUMP:
+        MOV CX, 41
+        MOV BX, 51
+        
+write:
         stosw
         CMP CX, 1
-        JE LINHA
-        JMP FIM_LOOP
-    LINHA:
-        cmp BX, 0
-        JE FIM_LOOP
-        mov CX, 41 
-        SUB DI, 80
-        add DI, 320
-        dec BX
-    FIM_LOOP:
-        loop DUMP
-    RETO:
+        JZ new_line
+        jmp end_of_loop
+new_line:
+        CMP BX, 0
+        JE RETURN
+        MOV CX, 41
+        SUB DI, 81
+        ADD DI, 320
+        DEC BX 
+end_of_loop: 
+        loop write
+return:
         pop ES
         pop DI
         pop CX
@@ -53,25 +54,26 @@ QUAD    DD
        
         MOV AX,13H ;TROCA PARA MODO GRAFICO
         INT 10H
-       
-        ;mov AX,03H ;TROCA PARA MODO GRAFICO
+
+        ;mov AX,03H ;TROCA PARA MODO NORMAL
         ;int 10H
         
         mov AL, 02H
         mov DI, 0
         call ESC_QUAD
 
-        mov AL, 11
-        mov DI, 80
-        call ESC_QUAD
+        ;mov AL, 11
+        ;mov DI, 80
+        ;call ESC_QUAD
         
-        mov AL, 13
-        mov DI, 160
-        call ESC_QUAD
+        ;mov AL, 13
+        ;mov DI, 160
+        ;call ESC_QUAD
         
-        mov AL, 12
-        mov DI, 240
-        call ESC_QUAD
+        ;mov AL, 12
+        ;mov DI, 240
+        ;     call ESC_QUAD
+
         
         MOV AX, 08H
         int 21h

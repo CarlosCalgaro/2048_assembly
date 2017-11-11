@@ -14,7 +14,27 @@
     
    include basico.asm
    include contr.asm
-    main:
+   
+   TROCAR Proc
+    ;SI ORIGEM
+    ;DI DESTINO
+    push SI
+    push DI
+    push AX
+    push BX
+    MOV SI, offset Tabuleiro 
+    MOV AX, [SI]
+    MOV BX, [DI]
+    MOV [SI], BX
+    MOV [DI], AX
+    pop BX
+    pop AX
+    pop DI
+    pop SI
+    ret
+   endp
+   
+   main:
         mov AX, @DATA
         mov ES, AX
         mov DS, AX
@@ -22,9 +42,11 @@
         MOV AX,13H ;TROCA PARA MODO GRAFICO
         INT 10H
         
+        MOV SI, offset Tabuleiro
+        MOV DI, [offset Tabuleiro+2]
+        call TROCAR
+        
         MOV DI, offset Tabuleiro
-        call ESC_MATRIZ
-        call MOVER_DIREITA
         call ESC_MATRIZ
         ;call PROCESSAR_INPUT
         MOV AX, 04C00H ;DESLIGA O PROGRAMA E RETORNA STATUS 0

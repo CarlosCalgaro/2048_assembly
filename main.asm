@@ -10,11 +10,13 @@
     
     Tabuleiro dw  1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0;4 DUP( 4 DUP(0H));0FFFH,0BCDH,0AAAH,12357,51511,61353,7,8,9,10,11,12,13,14,15,163
     String db 80
+    TelaInicial db '2048','$','Jogar 2048','$','Recordes','$','Automatico','$','Sair','$','Autores: Carlos Calgaro e Eduardo Spinelli', '$' ; DEPENDENCIA DA tela.asm
 .code
     
    include basico.asm
-   include contr.asm
-    main:
+   ;include contr.asm
+   include tela.asm
+   main:
         mov AX, @DATA
         mov ES, AX
         mov DS, AX
@@ -22,11 +24,14 @@
         MOV AX,13H ;TROCA PARA MODO GRAFICO
         INT 10H
         
+        call write_tela
+        call PROCESSAR_INPUT
+        
         MOV DI, offset Tabuleiro
+
+        
         call ESC_MATRIZ
-        call MOVER_DIREITA
-        call ESC_MATRIZ
-        ;call PROCESSAR_INPUT
+        
         MOV AX, 04C00H ;DESLIGA O PROGRAMA E RETORNA STATUS 0
         INT 21h    
     end main

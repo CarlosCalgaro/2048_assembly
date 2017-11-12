@@ -1,20 +1,3 @@
-MOVER_DIREITA PROC
-    ; DI RECEBE A MATRIZ
-    MOV BX, DI
-    
-    MOV CX, 4 ; TAMANHO DA LINHA
-    lp_mover_direita:
-       
-        MOV SI, [DI + 2]
-        TROCA CAMPO
-    
-    loop lp_mover_direita
-    
-
-
-    ret
-ENDP
-
 
 TROCA_CAMPO Proc
     ;SI ORIGEM

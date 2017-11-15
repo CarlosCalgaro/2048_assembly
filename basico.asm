@@ -1,5 +1,14 @@
-
-    UINT16_STR proc ; TRANSFORMA UM NUMERO DE 16 BITS EM STRING
+    CLEAR_SCREEN MACRO
+        PUSH AX
+        ;MOV AX, 0700H
+        XOR AX,AX
+        MOV AX, 07FFH
+        int 10H
+        POP AX 
+    ENDM
+    
+    UINT16_STR proc 
+            ; TRANSFORMA UM NUMERO DE 16 BITS EM STRING
             ;SI recebe o LUGAR PARA RETORNO 
             ;AX RECEBE O NUMERO A SER ESCRITO
             ;RETORNA EM SI O NUMERO CONVERTIDO PRA ASCII COM UM $ NO FINAL
@@ -8,7 +17,7 @@
             PUSH AX
             
             MOV BX,10      
-            MOV [SI+80],'$'
+            MOV byte ptr 80[SI],'$'
             LEA SI,[SI+80]
     ASC2:
             mov dx,0            ; clear dx prior to dividing dx:ax by bx
@@ -145,4 +154,33 @@
         pop ax
         ret
     endp
+    
+    RANDOM_NUM proc
+        push AX
+        push BX
+        push CX
+        push SI
+        ; VERIFICA SE CONTEUDO DA MEMORIA FOR 0, SE FOR 0 USA A MASCARA ISSO DEVE TERMINAR DEPOIS
+        MOV AX, 8016H ; MASCARA
+        MOV SI, offset NumeroAleartorio
+        MOV CX, 1H ; MOVER MASCARA PARA FAZER O AND
+        MOV BX, [SI]
+        AND CX, BX
+        CMP CX, 0
+        JNZ rotate_xor
+        ROR BX, 1
+        jmp fim_random_num
+        rotate_xor:
+        XOR BX, AX
+        ROR BX, 1
+        fim_random_num:
+        MOV [SI], BX
+        
+        pop SI
+        pop CX
+        pop BX
+        pop AX
+      ret
+    endp
+
     

@@ -16,7 +16,7 @@
     endp  
     
        
-       PROCESSAR_INPUT PROC
+    PROCESSAR_INPUT PROC
         PUSH AX
         PUSH BX
         INICIO_TELA_PROC: 
@@ -35,15 +35,16 @@
 
         end_game:
             MOV AX, 04C00H ;DESLIGA O PROGRAMA E RETORNA STATUS 0
-            INT 21h
+            INT 21h 
         iniciar_jogo:
+            CLEAR_SCREEN
         records:
         iniciar_automatico:  
         
         POP BX
         POP AX
         ret
-       ENDP
+    ENDP
   
     write_tela proc
         PUSH AX

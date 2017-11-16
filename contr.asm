@@ -187,6 +187,7 @@ MOVIMENTO_DIREITA proc
         MOV_DIR_NOVA_LINHA:
         ADD DI, 8
         LEA SI, [6][DI]
+        ; \/ MELHOR ESSA CONDI??O ABAIXO
         CMP DI, 32
         JZ MOV_DIR_RET
         MOV BX, 6

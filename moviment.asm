@@ -6,7 +6,7 @@
 
 .data
     
-    Tabuleiro dw  2,2,4,4,2,2,4,4,0,0,0,0,0,0,0,0 ;4 DUP( 4 DUP(0H));0FFFH,0BCDH,0AAAH,12357,51511,61353,7,8,9,10,11,12,13,14,15,163
+    Tabuleiro dw  0,0,0,0, 2,0,0,4, 2,0,0,4, 0,0,0,4 ;4 DUP( 4 DUP(0H));0FFFH,0BCDH,0AAAH,12357,51511,61353,7,8,9,10,11,12,13,14,15,163
     String db 80
     TelaInicial db '2048','$','Jogar 2048','$','Recordes','$','Automatico','$','Sair','$','Autores: Carlos Calgaro e Eduardo Spinelli', '$' ; DEPENDENCIA DA tela.asm
     NumeroAleartorio dw 3
@@ -16,70 +16,74 @@
    include tela.asm ; FUNCOES QUE ESCREVEM TELA INICIAL
    include contr.asm ; FUNCOES DE MOVIMENTACAO
     
-MOVIMENTO_ESQUERDA proc
-        push AX BX CX    
-        push DI BP
-        ; Setando BX e DI    
+   
+   
+   MOVIMENTO_CIMA proc
         MOV DI, offset Tabuleiro
-    MOV_ESQ_LINHAS:
-        MOV BX, 0
-        MOV_ESQ_INICIO:
+        MOV SI, DI
+        XOR BX, BX
+        MOV_CIMA_INICIO_LINHA:
         PUSH BX
-    ; VERIFICA SE BX EST? APONTANDO PARA INICIO DA LINHA
-     MOV_ESC_CONTINUA:       
-                MOV AX, DI
-                LEA CX, [DI][BX]
-                CMP CX, AX
-                JZ MOV_ESC_PROXIMO_NUMERO
-        
-               ; NAO MOVEMOS NADA SE FOR 0
-                CMP word ptr DS:[DI][BX], 0 
-                jz MOV_ESC_PROXIMO_NUMERO
-
-                MOV BP, BX
-                SUB BP, 2            
+        MOV_CIMA_INICIO:
+            LEA AX, [DI][BX]
+            CMP AX, SI
+            JZ MOV_CIMA_PROX_NUM
+            
+            CMP word ptr DS:[DI][BX], 0
+            JZ MOV_CIMA_PROX_NUM
+            
+            MOV BP, BX
+            sub BP, 8
+            
+            CMP word ptr DS:[DI][BP], 0
+            JZ MOV_CIMA_TROCAR
+            
+            MOV CX, DS:[DI][BX]; Valor a ser testado
+            CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+            JZ MOV_CIMA_MERGE
+            JMP MOV_CIMA_PROX_NUM
+           
+            MOV_CIMA_TROCAR:
+                push SI
+                push DI
+                lea SI, DS:[DI][BP]
+                lea DI, DS:[DI][BX]
+                call TROCA_CAMPO
+                pop DI
+                pop SI
+                SUB BX, 8
+                JMP MOV_CIMA_INICIO
+           
+            MOV_CIMA_MERGE:
+                push SI
+                push DI
+                lea SI, DS:[DI][BP]
+                lea DI, DS:[DI][BX] 
+                call merge
+                pop DI
+                pop SI
+                LEA SI, DS:[DI][BP]
+                ADD SI, 8
                 
-                ; VERIFICAR SE PODE MOVER, COMPARAR BX - 2 COM 0
-                 
-                CMP word ptr DS:[DI][BP], 0
-                 jz MOV_ESC_TROCA 
-                
-                 MOV AX, DS:[DI][BP]
-                 CMP [DI][BX], AX ; VERIFICAR SE PODE FAZER MERGE, SE BX-2 FOR IGUAL A BX                        
-                 JE MOV_ESC_EXEC_MERGE
-                 jmp MOV_ESC_PROXIMO_NUMERO
-                MOV_ESC_TROCA:
-                    push SI
-                    push DI
-                    lea SI, DS:[DI][BP]
-                    lea DI, DS:[DI][BX]
-                    call TROCA_CAMPO
-                    pop DI
-                    pop SI
-                    SUB BX, 2
-                    JMP MOV_ESC_CONTINUA
-                MOV_ESC_EXEC_MERGE:
-                    push SI
-                    push DI
-                    lea SI, DS:[DI][BP]
-                    lea DI, DS:[DI][BX]
-                    call merge
-                    pop DI
-                    pop SI
-        MOV_ESC_PROXIMO_NUMERO:
-        POP BX
-        ADD BX, 2
-        CMP BX, 8
-        JNE MOV_ESQ_INICIO
-        ; IR PARA NOVA LINHA
-        ADD DI, BX
-        CMP DI,32
-        JNE MOV_ESQ_LINHAS
-        POP CX BX AX     
-        POP BP DI 
-        ret
+                 MOV_CIMA_PROX_NUM:
+            POP BX
+            ADD BX, 8
+            CMP BX, 32
+            JZ MOV_CIMA_NOVA_LINHA
+            JMP MOV_CIMA_INICIO_LINHA
+            MOV_CIMA_NOVA_LINHA:
+            ADD DI, 2
+            ;LEA SI, [DI]
+            MOV SI, DI
+            CMP DI, 38
+            JZ MOV_CIMA_RET
+            MOV BX, 0 
+            JMP MOV_CIMA_INICIO_LINHA
+            MOV_CIMA_RET:
+            ret
    endp
-      main:
+   
+   main:
     
         mov AX, @DATA
         mov DS, AX
@@ -93,7 +97,7 @@ MOVIMENTO_ESQUERDA proc
         ;DI DESTINO
        
         MOV DI, offset Tabuleiro
-        call MOVIMENTO_ESQUERDA
+        call MOVIMENTO_CIMA
        
         MOV DI, offset Tabuleiro
         call ESC_MATRIZ

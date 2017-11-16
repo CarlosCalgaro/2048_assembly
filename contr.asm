@@ -62,4 +62,138 @@ PROCESSAR_JOGADA PROC
     ;   
     ret
 ENDP
+   MOVIMENTO_ESQUERDA proc
+    PUSH AX BX CX
+    PUSH DI SI
+    MOV DI, offset Tabuleiro
+    MOV SI, DI ; Copia SI
+    MOV BX, 0
+    MOV_ESQ_INICIO_LINHA:
+    PUSH BX
+    MOV_ESQ_INICIO:
+        LEA AX, [DI][BX] ; Armazena o valor a ser testado
+        CMP AX, SI ; Armazena o valor inicial da linha
+        JZ MOV_ESQ_PROX_NUM ; Deve-se pular para o proximo numero
+    
+        ;CMP 0, word ptr[AX] ; Verifica se o valor a ser testado ? 0 
+        CMP word ptr DS:[DI][BX], 0
+        JZ MOV_ESQ_PROX_NUM
+        
+        
+        MOV BP, BX ; Endere?o do index anterior ao que vamos testar
+        SUB BP, 2  ; ---------------------------------------------
+       
+        CMP word ptr DS:[DI][BP], 0
+        JZ MOV_ESQ_TROCAR
+        
+        MOV CX, DS:[DI][BX]; Valor a ser testado
+        CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+        JZ MOV_ESQ_MERGE
+        JMP MOV_ESQ_PROX_NUM
+        MOV_ESQ_TROCAR:
+            push SI
+            push DI
+            lea SI, DS:[DI][BP]
+            lea DI, DS:[DI][BX]
+            call TROCA_CAMPO
+            pop DI
+            pop SI
+            SUB BX, 2
+            JMP MOV_ESQ_INICIO
+        MOV_ESQ_MERGE:
+            push SI
+            push DI
+            lea SI, DS:[DI][BP]
+            lea DI, DS:[DI][BX]
+            call merge
+            pop DI
+            pop SI
+            LEA SI, DS:[DI][BP]
+            ADD SI, 2
+   MOV_ESQ_PROX_NUM:
+        POP BX
+        ADD BX, 2
+        CMP BX, 8
+        JZ MOV_ESQ_NOVA_LINHA
+        JMP MOV_ESQ_INICIO_LINHA
+        MOV_ESQ_NOVA_LINHA:
+        ADD DI, BX
+        MOV SI, DI
+        CMP DI, 32
+        JZ MOV_ESQ_RET
+        XOR BX, BX
+        JMP MOV_ESQ_INICIO_LINHA
+        MOV_ESQ_RET:
 
+    POP SI DI       
+    POP CX BX AX
+    ret    
+   endp
+
+MOVIMENTO_DIREITA proc
+    PUSH AX BX CX
+    PUSH DI SI
+    MOV DI, offset Tabuleiro
+    LEA SI, [6][DI] ; Copia SI
+    MOV BX, 6
+    MOV_DIR_INICIO_LINHA:
+    PUSH BX
+    MOV_DIR_INICIO:
+        LEA AX, [DI][BX] ; Armazena o valor a ser testado
+        CMP AX, SI ; Armazena o valor inicial da linha
+        JZ MOV_DIR_PROX_NUM ; Deve-se pular para o proximo numero
+    
+        ;CMP 0, word ptr[AX] ; Verifica se o valor a ser testado ? 0 
+        CMP word ptr DS:[DI][BX], 0
+        JZ MOV_DIR_PROX_NUM
+        
+        
+        MOV BP, BX ; Endere?o do index anterior ao que vamos testar
+        ADD BP, 2  ; ---------------------------------------------
+       
+        CMP word ptr DS:[DI][BP], 0
+        JZ MOV_DIR_TROCAR
+        
+        MOV CX, DS:[DI][BX]; Valor a ser testado
+        CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+        JZ MOV_DIR_MERGE
+        JMP MOV_DIR_PROX_NUM
+        MOV_DIR_TROCAR:
+            push SI
+            push DI
+            lea SI, DS:[DI][BP]
+            lea DI, DS:[DI][BX]
+            call TROCA_CAMPO
+            pop DI
+            pop SI
+            ADD BX, 2
+            JMP MOV_DIR_INICIO
+        MOV_DIR_MERGE:
+            push SI
+            push DI
+            lea SI, DS:[DI][BP]
+            lea DI, DS:[DI][BX] 
+            call merge
+            pop DI
+            pop SI
+            LEA SI, DS:[DI][BP]
+            SUB SI, 2
+   MOV_DIR_PROX_NUM:
+        POP BX
+        SUB BX, 2
+        CMP BX, -2
+        JZ MOV_DIR_NOVA_LINHA
+        JMP MOV_DIR_INICIO_LINHA
+        MOV_DIR_NOVA_LINHA:
+        ADD DI, 8
+        LEA SI, [6][DI]
+        CMP DI, 32
+        JZ MOV_DIR_RET
+        MOV BX, 6
+        JMP MOV_DIR_INICIO_LINHA
+        MOV_DIR_RET:
+
+    POP SI DI       
+    POP CX BX AX
+    ret    
+   endp

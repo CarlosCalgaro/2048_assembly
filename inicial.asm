@@ -17,34 +17,7 @@
     
    include basico.asm ; FUNCOES  DE ESCRITA DE MATRIZ
    include tela.asm ; FUNCOES QUE ESCREVEM TELA INICIAL
-   
-   RANDOM_NUM proc
-    push AX
-    push BX
-    push CX
-    push SI
-    ; VERIFICA SE CONTEUDO DA MEMORIA FOR 0, SE FOR 0 USA A MASCARA 
-    MOV AX, 8016H ; MASCARA
-    MOV SI, offset NumeroAleartorio
-    MOV CX, 1H ; MOVER MASCARA PARA FAZER O AND
-    MOV BX, [SI]
-    AND CX, BX
-    CMP CX, 0
-    JNZ rotate_xor
-    ROR BX, 1
-    jmp fim_random_num
-    rotate_xor:
-    XOR BX, AX
-    ROR BX, 1
-    fim_random_num:
-    MOV [SI], BX
-    
-    pop SI
-    pop CX
-    pop BX
-    pop AX
-    ret
-   endp
+
 
        
     main:

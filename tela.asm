@@ -36,11 +36,11 @@
         end_game:
             MOV AX, 04C00H ;DESLIGA O PROGRAMA E RETORNA STATUS 0
             INT 21h 
-        iniciar_jogo:
-            CLEAR_SCREEN
+        
         records:
         iniciar_automatico:  
-        
+        iniciar_jogo:
+            call GAME_LOOP
         POP BX
         POP AX
         ret

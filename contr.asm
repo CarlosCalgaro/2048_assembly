@@ -22,45 +22,61 @@ MERGE proc
     ; SI = ENDERECO DO OPERADOR 2 FINAL
     push SI
     push DI
-    SAL byte ptr [SI] , 1
-    MOV byte ptr [DI] , 0
+    SHL word ptr [SI], 1
+    MOV word ptr [DI] , 0
     pop DI
     pop SI
+    ret
+endp
+
+
+GAME_LOOP proc
+    PUSH CX DI
+    MOV DI, offset Tabuleiro
+    MOV CX, 9999
+    LACO_GAME_LOOP:
+        call CLEAR_SCREEN
+        call ESC_MATRIZ
+        call PROCESSAR_JOGADA
+    loop LACO_GAME_LOOP
+    POP DI CX
     ret
 endp
 
 PROCESSAR_JOGADA PROC
    PUSH AX
    PUSH BX
-   MOV AH, 10h
-   INT 16h
-;   
-;   cmp ax, 4D00h   ;DIREITA'
-;   je  jogar_direita
-;   cmp ax, 4800h  ;CIMA
-;   je  jogar_cima
-;   cmp ax, 5000h   ;BAIXO;
-;   je  jogar_baixo
-   cmp ax, 4B00h   ;ESQUERDA
-   je  jogar_esquerda
-;   
-;   jogar_direita:
-;       call MOVER_DIREITA
-;       jmp fim_processar_input
-   jogar_esquerda:
-   call MOVIMENTO_ESQUERDA
-;       jmp fim_processar_input
-;   jogar_baixo:
-;       call MOVER_DIREITA
-;       jmp fim_processar_input
-;   jogar_cima:
-;       call MOVER_DIREITA
-;       jmp fim_processar_input
-;   fim_processar_input:
-;   POP BX
-;   POP AX
-    ;   
-    ret
+   
+   XOR AX, AX
+   MOV AH, 10h ; INTERRUPCAO QUE LE UMA TECLA DO TECLADO
+   INT 16h     ; ---------------------------------------
+
+   ;ESQUERDA 4B DIreita 4D  CIMA 48 BAIXO 50
+   cmp AH, 4DH ;DIREITA'
+   je  proc_jogada_direita
+   cmp AH, 48h  ;CIMA
+   je  proc_jogada_cima
+   cmp AH, 50h   ;BAIXO;
+   je  proc_jogada_baixo
+   cmp AH, 4Bh   ;ESQUERDA
+   je  proc_jogada_esquerda
+   jmp fim_processar_input
+   proc_jogada_direita:
+       call MOVIMENTO_DIREITA
+       jmp fim_processar_input
+   proc_jogada_esquerda:
+       call MOVIMENTO_ESQUERDA
+       jmp fim_processar_input
+   proc_jogada_baixo:
+       call MOVIMENTO_BAIXO
+       jmp fim_processar_input
+   proc_jogada_cima:
+       call MOVIMENTO_CIMA
+       jmp fim_processar_input
+   fim_processar_input:
+   POP BX
+   POP AX
+   ret
 ENDP
    MOVIMENTO_ESQUERDA proc
     PUSH AX BX CX
@@ -198,3 +214,146 @@ MOVIMENTO_DIREITA proc
     POP CX BX AX
     ret    
    endp
+   
+   
+   
+   MOVIMENTO_CIMA proc
+        PUSH AX BX CX
+        PUSH DI SI
+        MOV DI, offset Tabuleiro
+        MOV SI, DI
+        XOR BX, BX
+        MOV_CIMA_INICIO_LINHA:
+        PUSH BX
+        MOV_CIMA_INICIO:
+            LEA AX, [DI][BX]
+            CMP AX, SI
+            JZ MOV_CIMA_PROX_NUM
+            
+            CMP word ptr DS:[DI][BX], 0
+            JZ MOV_CIMA_PROX_NUM
+            
+            MOV BP, BX
+            sub BP, 8
+            
+            CMP word ptr DS:[DI][BP], 0
+            JZ MOV_CIMA_TROCAR
+            
+            MOV CX, DS:[DI][BX]; Valor a ser testado
+            CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+            JZ MOV_CIMA_MERGE
+            JMP MOV_CIMA_PROX_NUM
+           
+            MOV_CIMA_TROCAR:
+                push SI
+                push DI
+                lea SI, DS:[DI][BP]
+                lea DI, DS:[DI][BX]
+                call TROCA_CAMPO
+                pop DI
+                pop SI
+                SUB BX, 8
+                JMP MOV_CIMA_INICIO
+           
+            MOV_CIMA_MERGE:
+                push SI
+                push DI
+                lea SI, DS:[DI][BP]
+                lea DI, DS:[DI][BX] 
+                call merge
+                pop DI
+                pop SI
+                LEA SI, DS:[DI][BP]
+                ADD SI, 8
+                
+                 MOV_CIMA_PROX_NUM:
+            POP BX
+            ADD BX, 8
+            CMP BX, 32
+            JZ MOV_CIMA_NOVA_LINHA
+            JMP MOV_CIMA_INICIO_LINHA
+            MOV_CIMA_NOVA_LINHA:
+            ADD DI, 2
+            ;LEA SI, [DI]
+            MOV SI, DI
+            CMP DI, 8
+            JZ MOV_CIMA_RET
+            MOV BX, 0 
+            JMP MOV_CIMA_INICIO_LINHA
+            MOV_CIMA_RET:
+            POP SI DI       
+            POP CX BX AX
+            ret
+   endp
+   
+   MOVIMENTO_BAIXO proc
+        PUSH AX BX CX
+        PUSH DI SI
+        
+        MOV DI, offset Tabuleiro
+        LEA SI, [24][DI] ; Copia SI
+            MOV BX, 24
+        MOV_BAIXO_INICIO_LINHA:
+        PUSH BX
+        MOV_BAIXO_INICIO:
+            LEA AX, [DI][BX]
+            CMP AX, SI
+            JZ MOV_BAIXO_PROX_NUM
+            
+            CMP word ptr DS:[DI][BX], 0
+            JZ MOV_BAIXO_PROX_NUM
+            
+            MOV BP, BX
+            ADD BP, 8
+            
+            CMP word ptr DS:[DI][BP], 0
+            JZ MOV_BAIXO_TROCAR
+            
+            MOV CX, DS:[DI][BX]; Valor a ser testado
+            CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+            JZ MOV_BAIXO_MERGE
+            JMP MOV_BAIXO_PROX_NUM
+           
+            MOV_BAIXO_TROCAR:
+                push SI
+                push DI
+                lea SI, DS:[DI][BP]
+                lea DI, DS:[DI][BX]
+                call TROCA_CAMPO
+                pop DI
+                pop SI
+                ADD BX, 8
+                JMP MOV_BAIXO_INICIO
+           
+            MOV_BAIXO_MERGE:
+                push SI
+                push DI
+                lea SI, DS:[DI][BP]
+                lea DI, DS:[DI][BX] 
+                call merge
+                pop DI
+                pop SI
+                LEA SI, DS:[DI][BP]
+                SUB SI, 8
+                
+                 MOV_BAIXO_PROX_NUM:
+            POP BX
+            SUB BX, 8
+            CMP BX, -8
+            JZ MOV_BAIXO_NOVA_LINHA
+            JMP MOV_BAIXO_INICIO_LINHA
+            MOV_BAIXO_NOVA_LINHA:
+            ADD DI, 2
+            ;LEA SI, [DI]
+            LEA SI, [24][DI]
+            CMP DI, 8
+            JZ MOV_BAIXO_RET
+            MOV BX, 24
+            JMP MOV_BAIXO_INICIO_LINHA
+            MOV_BAIXO_RET:
+            POP SI DI       
+            POP CX BX AX
+            ret
+   endp
+   
+   

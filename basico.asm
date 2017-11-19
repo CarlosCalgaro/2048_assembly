@@ -1,11 +1,24 @@
-    CLEAR_SCREEN MACRO
-        PUSH AX
-        ;MOV AX, 0700H
-        XOR AX,AX
-        MOV AX, 07FFH
-        int 10H
-        POP AX 
-    ENDM
+  CLEAR_SCREEN PROC
+    PUSH AX BX CX DX
+    XOR BX,BX
+    MOV AX,0600H    ;06 TO SCROLL & 00 FOR FULLJ SCREEN
+    MOV BH,00H    ;ATTRIBUTE 7 FOR BACKGROUND AND 1 FOR FOREGROUND
+    MOV CX,0000H    ;STARTING COORDINATES
+    ;MOV CH, 0040:[0084]
+    ;MOV CL, 0040:[0049]
+    ;MOV DX, 0FF00H
+    MOV DX, 1850H    ;ENDING COORDINATES
+    
+    INT 10H        ;FOR VIDEO DISPLAY
+    MOV AX, 0200H ;AH = 02
+    MOV BX, 0000H;BH = page number (0 for graphics modes)
+    ;DH = row
+    ;DL = column
+    MOV DX, 0000H
+    int 10h
+    POP DX CX BX AX
+    ret
+   ENDP
     
     UINT16_STR proc 
             ; TRANSFORMA UM NUMERO DE 16 BITS EM STRING

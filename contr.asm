@@ -50,13 +50,8 @@ ADD_RANDOM proc
     add_random_set_4:
     MOV AX, 4
     add_random_insert:
+    MOV SI, offset Tabuleiro
     MOV DS:[SI][BX], AX
-       
-    MOV BX, offset ScoreLocal ; SOMA DO NOVO VALOR AO SCORE TOTAL
-    MOV CX, [BX]
-    ADD CX, AX
-    MOV [BX], CX
-    
     
     add_random_fim:
     POP SI
@@ -70,8 +65,18 @@ MERGE proc
     ; SI = ENDERECO DO OPERADOR 2 FINAL
     push SI
     push DI
+    push BX
+    push CX
     SHL word ptr [SI], 1
     MOV word ptr [DI] , 0
+   
+    MOV BX, offset ScoreLocal ; SOMA DO NOVO VALOR AO SCORE TOTAL
+    MOV CX, [BX]
+    ADD CX, [SI]
+    MOV [BX], CX
+    
+    pop CX
+    pop BX
     pop DI
     pop SI
     ret
@@ -407,5 +412,3 @@ MOVIMENTO_DIREITA proc
             POP CX BX AX
             ret
    endp
-   
-   

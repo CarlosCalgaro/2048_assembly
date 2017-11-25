@@ -16,6 +16,54 @@ TROCA_CAMPO Proc
     ret
 endp
    
+ADD_RANDOM proc
+    ; REFAZER ESTA FUNCAO
+    push AX BX CX
+    push SI
+    
+    MOV SI, offset NumeroAleartorio
+    call RANDOM_NUM
+    MOV BX, [SI]
+    MOV AX, BX
+    AND BX, 10H
+    SHL BX, 1 ; multiplica por 2 para achar o endere?o efetivo
+    CMP word ptr DS:[SI][BX], 0 ; Se n?o for  zero temos que achar outro campo
+    JE add_random_select
+    
+    MOV CX, 17 
+    add_random_laco:
+        CMP word ptr DS:[SI][BX], 0
+        JE add_random_select
+        ADD BX, 2
+        CMP BX, 34
+        JNE add_random_laco_fim
+        MOV BX, 0
+        add_random_laco_fim:
+    loop add_random_laco ; Ao sair desse la?o, BX obrigatoriamente tem um valor, ou a funcao ja foi retornada
+    
+    add_random_select:
+    AND AX, 1
+    CMP AX, 1
+    JZ add_random_set_4
+    MOV AX, 2
+    JMP add_random_insert
+    add_random_set_4:
+    MOV AX, 4
+    add_random_insert:
+    MOV DS:[SI][BX], AX
+       
+    MOV BX, offset ScoreLocal ; SOMA DO NOVO VALOR AO SCORE TOTAL
+    MOV CX, [BX]
+    ADD CX, AX
+    MOV [BX], CX
+    
+    
+    add_random_fim:
+    POP SI
+    POP CX BX AX
+    ; AQUI SERIA O TRATAMENTO PARA ACABAR O JOGO
+    ret
+endp
 
 MERGE proc
     ; DI = ENDERECO DO OPERADOR 1 INICIAL
@@ -37,7 +85,11 @@ GAME_LOOP proc
     LACO_GAME_LOOP:
         call CLEAR_SCREEN
         call ESC_MATRIZ
+        ;break
+        call ESC_GRAPH_MAT
+        call ESC_INFO
         call PROCESSAR_JOGADA
+        call ADD_RANDOM
     loop LACO_GAME_LOOP
     POP DI CX
     ret

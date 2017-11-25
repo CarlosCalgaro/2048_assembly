@@ -10,16 +10,13 @@
     String db 80
     TelaInicial db '2048','$','Jogar 2048','$','Recordes','$','Automatico','$','Sair','$','Autores: Carlos Calgaro e Eduardo Spinelli', '$' ; DEPENDENCIA DA tela.asm
     NumeroAleartorio dw 3
+    
 .code
     
    include basico.asm ; FUNCOES  DE ESCRITA DE MATRIZ
    include tela.asm ; FUNCOES QUE ESCREVEM TELA INICIAL
    include contr.asm ; FUNCOES DE MOVIMENTACAO
     
-   
- 
-   
-   
    
    main:
     

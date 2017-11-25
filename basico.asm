@@ -1,4 +1,4 @@
-  CLEAR_SCREEN PROC
+   CLEAR_SCREEN PROC
     PUSH AX BX CX DX
     XOR BX,BX
     MOV AX,0600H    ;06 TO SCROLL & 00 FOR FULLJ SCREEN
@@ -152,8 +152,7 @@
         ret
    endp
    
-    STR_LENGTH proc ;armazena o tamanho em CX
-        push cx
+   STR_LENGTH proc ;armazena o tamanho em CX String em DI
         push ax
         push di
         xor cx,cx
@@ -194,6 +193,10 @@
         pop BX
         pop AX
       ret
+    endp
+    
+    ESC_INFO proc
+    ret
     endp
 
     

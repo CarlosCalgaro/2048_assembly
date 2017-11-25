@@ -14,14 +14,15 @@
     NumeroAleartorio dw 3
     ScoreLocal dw 0
     TelaJogo db 'ESCORE ','$','JOGADAS ','$','MELHOR ','$','2048','$'
-
-.code
+    TelaRecords db 'RECORDS','$'
+    MelhoresResultados db 00h, 10H, 'Carlos Alb', 01H, 30h,10H, 'EduzaioAlb', 21H, 40h,11H, 'aerfos Alb', 01H, 24h,24H, 'gsusin gay', 24H,00h,10H, 'Carlos Alb', 10H ; 65 bytes
     
+.code
    include basico.asm
    include contr.asm
    include tela.asm 
    main:
-        ; Inicializando o segmento de dados
+        ; Inicializando o segmento de dados 
         mov AX, @data     ; Initialize DS to address 
         mov DS, AX        ; of data segment 
         mov ES, AX

@@ -1,3 +1,25 @@
+   ESC_TELA_RECORDS proc
+        MOV SI, offset TelaRecords
+        mov DL, 15
+        mov DH, 2
+        mov CX, 7
+        XOR BX, BX
+        MOV BL, 4H
+        call write_string_graphic
+        MOV AH, 10h
+        INT 16h
+        
+        MOV DL, 5
+        
+        MOV CX, 5
+        esc_tela_nomes:
+        ADD DH, 2
+        
+        loop esc_tela_nomes
+        ret
+   endp
+   
+   
    write_string_graphic proc
         ; DH  row,column to start writing
         ; CX length of string
@@ -42,6 +64,9 @@
             INT 21h 
         
         records:
+            call CLEAR_SCREEN
+            call ESC_TELA_RECORDS
+            ;JMP 
         iniciar_automatico:  
         iniciar_jogo:
             call ADD_RANDOM

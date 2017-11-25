@@ -25,21 +25,25 @@ ADD_RANDOM proc
     call RANDOM_NUM
     MOV BX, [SI]
     MOV AX, BX
-    AND BX, 10H
+    AND BX, 0FH
     SHL BX, 1 ; multiplica por 2 para achar o endere?o efetivo
+    MOV SI, offset Tabuleiro
     CMP word ptr DS:[SI][BX], 0 ; Se n?o for  zero temos que achar outro campo
     JE add_random_select
     
-    MOV CX, 17 
-    add_random_laco:
+    MOV CX, 16
+    comeco:   
+        ADD BX, 2 
         CMP word ptr DS:[SI][BX], 0
         JE add_random_select
-        ADD BX, 2
-        CMP BX, 34
-        JNE add_random_laco_fim
-        MOV BX, 0
-        add_random_laco_fim:
-    loop add_random_laco ; Ao sair desse la?o, BX obrigatoriamente tem um valor, ou a funcao ja foi retornada
+        CMP BX, 30
+        JNAE add_random_fim_loop
+        MOV BX, -2
+        add_random_fim_loop:
+    loop comeco
+    ; AQUI VAI O C?DIGO PARA CONDI?AO DE DERROTA
+    
+    jmp add_random_fim
     
     add_random_select:
     AND AX, 1
@@ -103,7 +107,7 @@ endp
 PROCESSAR_JOGADA PROC
    PUSH AX
    PUSH BX
-   
+   jogada_invalida:
    XOR AX, AX
    MOV AH, 10h ; INTERRUPCAO QUE LE UMA TECLA DO TECLADO
    INT 16h     ; ---------------------------------------
@@ -117,7 +121,7 @@ PROCESSAR_JOGADA PROC
    je  proc_jogada_baixo
    cmp AH, 4Bh   ;ESQUERDA
    je  proc_jogada_esquerda
-   jmp fim_processar_input
+   jmp jogada_invalida
    proc_jogada_direita:
        call MOVIMENTO_DIREITA
        jmp fim_processar_input
@@ -131,6 +135,7 @@ PROCESSAR_JOGADA PROC
        call MOVIMENTO_CIMA
        jmp fim_processar_input
    fim_processar_input:
+   ; Soma uma jogada possivel
    POP BX
    POP AX
    ret
@@ -409,6 +414,229 @@ MOVIMENTO_DIREITA proc
             JMP MOV_BAIXO_INICIO_LINHA
             MOV_BAIXO_RET:
             POP SI DI       
+            POP CX BX AX
+            ret
+   endp
+    
+     TESTA_MOVIMENTO_ESQUERDA proc
+        push AX BX CX DX
+        push BP SI    
+        ; Verifica se ? possivel mexer pra esquerda, retorno 1 ou 0 em AX
+        MOV SI, offset Tabuleiro
+        MOV DI, SI
+        MOV BX, 0
+              
+        TEST_ESQ_INICIO_LINHA:
+        PUSH BX
+        TEST_ESQ_INICIO:
+            LEA AX, [DI][BX] ; Armazena o valor a ser testado
+            CMP AX, SI ; Armazena o valor inicial da linha
+            JZ TEST_ESQ_PROX_NUM ; Deve-se pular para o proximo numero
+
+            ;CMP 0, word ptr[AX] ; Verifica se o valor a ser testado ? 0
+            CMP word ptr DS:[DI][BX], 0
+            JZ TEST_ESQ_PROX_NUM
+           
+            MOV BP, BX ; Endere?o do index anterior ao que vamos testar
+            SUB BP, 2  ; ---------------------------------------------
+          
+            CMP word ptr DS:[DI][BP], 0
+            JZ TEST_ESQ_PODE
+           
+            MOV CX, DS:[DI][BX]; Valor a ser testado
+            CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+            JZ TEST_ESQ_PODE
+            JMP TEST_ESQ_PROX_NUM
+           
+            TEST_ESQ_PODE:
+                POP BX
+                MOV DI, 1
+                JMP TEST_ESQ_RET
+            TEST_ESQ_PROX_NUM:
+            POP BX
+            ADD BX, 2
+            CMP BX, 8
+            JZ TEST_ESQ_NOVA_LINHA
+            JMP TEST_ESQ_INICIO_LINHA
+            TEST_ESQ_NOVA_LINHA:
+            ADD DI, BX
+            MOV SI, DI
+            CMP DI, 32
+            JZ TEST_ESQ_NAO_POSSIVEL
+            XOR BX, BX
+            JMP TEST_ESQ_INICIO_LINHA
+           
+            TEST_ESQ_NAO_POSSIVEL:
+            MOV DI, 0
+            TEST_ESQ_RET:
+           
+            POP SI BP
+            POP DX CX BX AX
+            ret
+   endp
+   
+   
+   TESTA_MOVIMENTO_DIREITA proc
+    PUSH AX BX CX
+    PUSH SI BP
+    MOV DI, offset Tabuleiro
+    LEA SI, [6][DI] ; Copia SI
+    MOV BX, 6
+    TEST_DIR_INICIO_LINHA:
+    PUSH BX
+    TEST_DIR_INICIO:
+        LEA AX, [DI][BX] ; Armazena o valor a ser testado
+        CMP AX, SI ; Armazena o valor inicial da linha
+        JZ TEST_DIR_PROX_NUM ; Deve-se pular para o proximo numero
+   
+        ;CMP 0, word ptr[AX] ; Verifica se o valor a ser testado ? 0
+        CMP word ptr DS:[DI][BX], 0
+        JZ TEST_DIR_PROX_NUM
+       
+       
+        MOV BP, BX ; Endere?o do index anterior ao que vamos testar
+        ADD BP, 2  ; ---------------------------------------------
+      
+        CMP word ptr DS:[DI][BP], 0
+        JZ TEST_DIR_PODE
+       
+        MOV CX, DS:[DI][BX]; Valor a ser testado
+        CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+        JZ TEST_DIR_PODE
+        JMP TEST_DIR_PROX_NUM
+        TEST_DIR_PODE:
+         POP BX  
+         MOV DI, 1
+         JMP TEST_DIR_RET
+      
+        TEST_DIR_PROX_NUM:
+        POP BX
+        SUB BX, 2
+        CMP BX, -2
+        JZ  TEST_DIR_NOVA_LINHA
+        JMP TEST_DIR_INICIO_LINHA
+        TEST_DIR_NOVA_LINHA:
+        ADD DI, 8
+        LEA SI, [6][DI]
+        CMP DI, 32
+        JZ TEST_DIR_NAO_POSSIVEL
+        MOV BX, 6
+        JMP TEST_DIR_INICIO_LINHA
+        TEST_DIR_NAO_POSSIVEL:
+        MOV DI, 0
+        TEST_DIR_RET:
+
+    POP BP SI     
+    POP CX BX AX
+    ret   
+   endp
+   
+    TESTA_MOVIMENTO_CIMA proc
+        PUSH AX BX CX
+        PUSH DI SI BP
+        MOV DI, offset Tabuleiro
+        MOV SI, DI
+        XOR BX, BX
+        TEST_CIMA_INICIO_LINHA:
+        PUSH BX
+        TEST_CIMA_INICIO:
+            LEA AX, [DI][BX]
+            CMP AX, SI
+            JZ TEST_CIMA_PROX_NUM
+           
+            CMP word ptr DS:[DI][BX], 0
+            JZ TEST_CIMA_PROX_NUM
+           
+            MOV BP, BX
+            sub BP, 8
+           
+            CMP word ptr DS:[DI][BP], 0
+            JZ TEST_CIMA_PODE
+           
+            MOV CX, DS:[DI][BX]; Valor a ser testado
+            CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+            JZ TEST_CIMA_PODE
+            JMP TEST_CIMA_PROX_NUM
+          
+            TEST_CIMA_PODE:
+             POP BX  
+             MOV DI, 1
+             JMP TEST_CIMA_RET
+            
+            
+            TEST_CIMA_PROX_NUM:
+            POP BX
+            ADD BX, 8
+            CMP BX, 32
+            JZ TEST_CIMA_NOVA_LINHA
+            JMP TEST_CIMA_INICIO_LINHA
+            TEST_CIMA_NOVA_LINHA:
+            ADD DI, 2
+            ;LEA SI, [DI]
+            MOV SI, DI
+            CMP DI, 8
+            JZ TEST_CIMA_NAO_POSSIVEL
+            MOV BX, 0
+            JMP TEST_CIMA_INICIO_LINHA
+            TEST_CIMA_NAO_POSSIVEL:
+            MOV DI, 0
+            TEST_CIMA_RET:
+            POP BP SI DI      
+            POP CX BX AX
+            ret
+   endp
+   
+    TEST_MOVIMENTO_BAIXO proc
+        PUSH AX BX CX
+        PUSH DI SI BP
+       
+        MOV DI, offset Tabuleiro
+        LEA SI, [24][DI] ; Copia SI
+            MOV BX, 24
+        TEST_BAIXO_INICIO_LINHA:
+        PUSH BX
+        TEST_BAIXO_INICIO:
+            LEA AX, [DI][BX]
+            CMP AX, SI
+            JZ TEST_BAIXO_PROX_NUM
+           
+            CMP word ptr DS:[DI][BX], 0
+            JZ TEST_BAIXO_PROX_NUM
+           
+            MOV BP, BX
+            ADD BP, 8
+           
+            CMP word ptr DS:[DI][BP], 0
+            JZ TEST_BAIXO_PODE
+           
+            MOV CX, DS:[DI][BX]; Valor a ser testado
+            CMP word ptr DS:[DI][BP], CX ; Testa o anterior com o valor a ser testado
+            JZ TEST_BAIXO_PODE
+            JMP TEST_BAIXO_PROX_NUM
+          
+            TEST_BAIXO_PODE:
+             POP BX  
+             MOV DI, 1
+             JMP TEST_BAIXO_RET
+             TEST_BAIXO_PROX_NUM:
+             
+            POP BX
+            SUB BX, 8
+            CMP BX, -8
+            JZ TEST_BAIXO_NOVA_LINHA
+            JMP TEST_BAIXO_INICIO_LINHA
+            TEST_BAIXO_NOVA_LINHA:
+            ADD DI, 2
+            ;LEA SI, [DI]
+            LEA SI, [24][DI]
+            CMP DI, 8
+            JZ TEST_BAIXO_NAO_POSSIVEL
+            MOV BX, 24
+            JMP TEST_BAIXO_INICIO_LINHA
+            TEST_BAIXO_NAO_POSSIVEL:
+            MOV DI, 0
+            TEST_BAIXO_RET:
+            POP BP SI DI      
             POP CX BX AX
             ret
    endp

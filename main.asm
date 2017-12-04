@@ -16,6 +16,7 @@
     TelaJogo db 'ESCORE ','$','JOGADAS ','$','MELHOR ','$','2048','$'
     TelaRecords db 'RECORDS','$'
     MelhoresResultados db 00h, 10H, 'Carlos Alb', 01H, 30h,10H, 'EduzaioAlb', 21H, 40h,11H, 'aerfos Alb', 01H, 24h,24H, 'gsusin gay', 24H,00h,10H, 'Carlos Alb', 10H ; 65 bytes
+    JogadaPossivel db '0'
     
 .code
    include basico.asm

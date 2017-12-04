@@ -78,7 +78,6 @@ MERGE proc
     MOV CX, [BX]
     ADD CX, [SI]
     MOV [BX], CX
-    
     pop CX
     pop BX
     pop DI
@@ -88,7 +87,7 @@ endp
 
 
 GAME_LOOP proc
-    PUSH CX DI
+    PUSH CX DI SI
     MOV DI, offset Tabuleiro
     MOV CX, 9999
     LACO_GAME_LOOP:
@@ -98,20 +97,24 @@ GAME_LOOP proc
         call ESC_GRAPH_MAT
         call ESC_INFO
         call PROCESSAR_JOGADA
+        MOV SI, offset JogadaPossivel
+        cmp byte ptr DS:[SI], 0
+        JZ LACO_GAME_LOOP
         call ADD_RANDOM
     loop LACO_GAME_LOOP
-    POP DI CX
+    POP SI DI CX
     ret
 endp
 
 PROCESSAR_JOGADA PROC
    PUSH AX
    PUSH BX
+   PUSH DI 
    jogada_invalida:
    XOR AX, AX
    MOV AH, 10h ; INTERRUPCAO QUE LE UMA TECLA DO TECLADO
    INT 16h     ; ---------------------------------------
-
+   MOV DI, offset JogadaPossivel
    ;ESQUERDA 4B DIreita 4D  CIMA 48 BAIXO 50
    cmp AH, 4DH ;DIREITA'
    je  proc_jogada_direita
@@ -123,19 +126,32 @@ PROCESSAR_JOGADA PROC
    je  proc_jogada_esquerda
    jmp jogada_invalida
    proc_jogada_direita:
+       call TESTA_MOVIMENTO_DIREITA
+       cmp byte ptr DS:[DI], 0
+       JZ fim_processar_input
        call MOVIMENTO_DIREITA
        jmp fim_processar_input
    proc_jogada_esquerda:
+       call TESTA_MOVIMENTO_ESQUERDA
+       cmp byte ptr DS:[DI], 0
+       JZ fim_processar_input
        call MOVIMENTO_ESQUERDA
        jmp fim_processar_input
    proc_jogada_baixo:
+       call TEST_MOVIMENTO_BAIXO
+       cmp byte ptr DS:[DI], 0
+       JZ fim_processar_input
        call MOVIMENTO_BAIXO
        jmp fim_processar_input
    proc_jogada_cima:
+       call TESTA_MOVIMENTO_CIMA
+       cmp byte ptr DS:[DI], 0
+       JZ fim_processar_input
        call MOVIMENTO_CIMA
        jmp fim_processar_input
    fim_processar_input:
    ; Soma uma jogada possivel
+   POP DI
    POP BX
    POP AX
    ret
@@ -420,7 +436,7 @@ MOVIMENTO_DIREITA proc
     
      TESTA_MOVIMENTO_ESQUERDA proc
         push AX BX CX DX
-        push BP SI    
+        push BP SI DI
         ; Verifica se ? possivel mexer pra esquerda, retorno 1 ou 0 em AX
         MOV SI, offset Tabuleiro
         MOV DI, SI
@@ -450,7 +466,9 @@ MOVIMENTO_DIREITA proc
            
             TEST_ESQ_PODE:
                 POP BX
-                MOV DI, 1
+                MOV DI, offset JogadaPossivel
+                MOV AX, 1
+                MOV byte ptr DS:[DI], AL
                 JMP TEST_ESQ_RET
             TEST_ESQ_PROX_NUM:
             POP BX
@@ -467,10 +485,12 @@ MOVIMENTO_DIREITA proc
             JMP TEST_ESQ_INICIO_LINHA
            
             TEST_ESQ_NAO_POSSIVEL:
-            MOV DI, 0
+            MOV DI, offset JogadaPossivel
+            MOV AX, 0
+            MOV byte ptr DS:[DI], AL
             TEST_ESQ_RET:
            
-            POP SI BP
+            POP DI SI BP
             POP DX CX BX AX
             ret
    endp
@@ -478,7 +498,7 @@ MOVIMENTO_DIREITA proc
    
    TESTA_MOVIMENTO_DIREITA proc
     PUSH AX BX CX
-    PUSH SI BP
+    PUSH SI BP DI
     MOV DI, offset Tabuleiro
     LEA SI, [6][DI] ; Copia SI
     MOV BX, 6
@@ -506,7 +526,9 @@ MOVIMENTO_DIREITA proc
         JMP TEST_DIR_PROX_NUM
         TEST_DIR_PODE:
          POP BX  
-         MOV DI, 1
+         MOV DI, offset JogadaPossivel
+         MOV AX, 1
+         MOV byte ptr DS:[DI], AL
          JMP TEST_DIR_RET
       
         TEST_DIR_PROX_NUM:
@@ -523,10 +545,12 @@ MOVIMENTO_DIREITA proc
         MOV BX, 6
         JMP TEST_DIR_INICIO_LINHA
         TEST_DIR_NAO_POSSIVEL:
-        MOV DI, 0
+        MOV DI, offset JogadaPossivel
+        MOV AX, 0
+        MOV byte ptr DS:[DI], AL
         TEST_DIR_RET:
 
-    POP BP SI     
+    POP DI BP SI     
     POP CX BX AX
     ret   
    endp
@@ -560,7 +584,9 @@ MOVIMENTO_DIREITA proc
           
             TEST_CIMA_PODE:
              POP BX  
-             MOV DI, 1
+             MOV DI, offset JogadaPossivel
+            MOV AX, 1
+            MOV byte ptr DS:[DI], AL
              JMP TEST_CIMA_RET
             
             
@@ -579,7 +605,9 @@ MOVIMENTO_DIREITA proc
             MOV BX, 0
             JMP TEST_CIMA_INICIO_LINHA
             TEST_CIMA_NAO_POSSIVEL:
-            MOV DI, 0
+            MOV DI, offset JogadaPossivel
+            MOV AX, 0
+            MOV byte ptr DS:[DI], AL
             TEST_CIMA_RET:
             POP BP SI DI      
             POP CX BX AX
@@ -616,7 +644,9 @@ MOVIMENTO_DIREITA proc
           
             TEST_BAIXO_PODE:
              POP BX  
-             MOV DI, 1
+             MOV DI, offset JogadaPossivel
+             MOV AX, 1
+             MOV byte ptr DS:[DI], AL
              JMP TEST_BAIXO_RET
              TEST_BAIXO_PROX_NUM:
              
@@ -634,7 +664,9 @@ MOVIMENTO_DIREITA proc
             MOV BX, 24
             JMP TEST_BAIXO_INICIO_LINHA
             TEST_BAIXO_NAO_POSSIVEL:
-            MOV DI, 0
+            MOV DI, offset JogadaPossivel
+            MOV AX, 0
+            MOV byte ptr DS:[DI], AL
             TEST_BAIXO_RET:
             POP BP SI DI      
             POP CX BX AX

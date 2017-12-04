@@ -78,6 +78,15 @@ MERGE proc
     MOV CX, [BX]
     ADD CX, [SI]
     MOV [BX], CX
+    
+    CMP DS:[SI], 2048
+    JNZ merge_fim_proc
+    ;FLAG DE VITORIA SETADA QUANDO 2048
+    merge_fim_jogo:
+    MOV BX, offset VitoriaLocal
+    MOV CX, 1
+    MOV [BX], CX
+    merge_fim_proc:
     pop CX
     pop BX
     pop DI
@@ -93,15 +102,21 @@ GAME_LOOP proc
     LACO_GAME_LOOP:
         call CLEAR_SCREEN
         call ESC_MATRIZ
+        MOV SI, offset VitoriaLocal
+        CMP byte ptr DS:[SI], 1
+        JZ game_loop_fim_jogo
         ;break
         call ESC_GRAPH_MAT
         call ESC_INFO
         call PROCESSAR_JOGADA
-        MOV SI, offset JogadaPossivel
+        
+        MOV SI, offset JogadaPossivel ; COmpara se foi uma jogada valida
         cmp byte ptr DS:[SI], 0
         JZ LACO_GAME_LOOP
         call ADD_RANDOM
+        
     loop LACO_GAME_LOOP
+    game_loop_fim_jogo:
     POP SI DI CX
     ret
 endp

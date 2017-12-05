@@ -1,21 +1,30 @@
    ESC_TELA_RECORDS proc
-        MOV SI, offset TelaRecords
-        mov DL, 15
-        mov DH, 2
-        mov CX, 7
-        XOR BX, BX
-        MOV BL, 4H
-        call write_string_graphic
+        PUSH AX BX CX DX
+        push SI
+        
+        ;   MOV SI, offset TelaRecords
+        ; mov DL, 15
+        ;mov DH, 2
+        ;mov CX, 7
+        ;XOR BX, BX
+        ;MOV BL, 4H
+        ;call write_string_graphic
+        ;MOV AH, 10h
+        ;INT 16h
+        ;
+        ;MOV DL, 5
+        ;
+        ;MOV CX, 5
+        ;esc_tela_nomes:
+        ;ADD DH, 2
+        ;
+        ;loop esc_tela_nomes
+       ; 
+        XOR AX, AX
         MOV AH, 10h
         INT 16h
-        
-        MOV DL, 5
-        
-        MOV CX, 5
-        esc_tela_nomes:
-        ADD DH, 2
-        
-        loop esc_tela_nomes
+        POP SI
+        POP DX CX BX AX
         ret
    endp
    
@@ -45,7 +54,9 @@
     PROCESSAR_INPUT PROC
         PUSH AX
         PUSH BX
-        INICIO_TELA_PROC: 
+        INICIO_TELA_PROC:
+        call write_tela
+        
         MOV AH, 10h
         INT 16h
         
@@ -66,8 +77,10 @@
         records:
             call CLEAR_SCREEN
             call ESC_TELA_RECORDS
-            ;JMP 
+            JMP INICIO_TELA_PROC 
         iniciar_automatico:  
+            call CLEAR_SCREEN
+            call TELA_AUTOMATICO
         iniciar_jogo:
             call ADD_RANDOM
             call ADD_RANDOM
@@ -77,6 +90,16 @@
         ret
     ENDP
   
+    TELA_AUTOMATICO PROC
+        MOV SI, offset ModoAutomatico
+        MOV AX, 1H
+        MOV byte ptr DS:[SI], AL
+        call ADD_RANDOM
+        call ADD_RANDOM
+        call GAME_LOOP
+        ret
+    endp
+    
     ESC_GRAPH_MAT proc
         push AX BX CX DX
         push SI DI

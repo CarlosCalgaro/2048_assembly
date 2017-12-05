@@ -178,16 +178,13 @@
         MOV CX, 1H ; MOVER MASCARA PARA FAZER O AND
         MOV BX, [SI]
         AND CX, BX
-        CMP CX, 0
         JNZ rotate_xor
-        ROR BX, 1
         jmp fim_random_num
         rotate_xor:
         XOR BX, AX
-        ROR BX, 1
         fim_random_num:
+        ROR BX, 1
         MOV [SI], BX
-        
         pop SI
         pop CX
         pop BX

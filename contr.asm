@@ -41,8 +41,10 @@ ADD_RANDOM proc
         MOV BX, -2
         add_random_fim_loop:
     loop comeco
-    ; AQUI VAI O C?DIGO PARA CONDI?AO DE DERROTA
-    
+    ; Perdeu o jogos
+    MOV SI, offset VitoriaLocal
+    MOV AX, 2
+    MOV [SI], AL
     jmp add_random_fim
     
     add_random_select:
@@ -98,26 +100,48 @@ endp
 GAME_LOOP proc
     PUSH CX DI SI
     MOV DI, offset Tabuleiro
-    MOV CX, 9999
+
     LACO_GAME_LOOP:
         call CLEAR_SCREEN
         call ESC_MATRIZ
         MOV SI, offset VitoriaLocal
         CMP byte ptr DS:[SI], 1
-        JZ game_loop_fim_jogo
-        ;break
+        JZ GAME_LOOP_FIM_JOGO
+        
+        CMP byte ptr DS:[SI], 2
+        JZ GAME_LOOP_FIM_JOGO
+        
         call ESC_GRAPH_MAT
         call ESC_INFO
+        MOV SI, offset ModoAutomatico
+        CMP byte ptr DS:[SI], 1
+        JZ GAME_LOOP_AUTOMATICO
         call PROCESSAR_JOGADA
+        JMP GAME_LOOP_DPS_JOGADA
+        
+        GAME_LOOP_AUTOMATICO:
+        call JOGAR_AUTOMATICO
+        
+        GAME_LOOP_DPS_JOGADA:
         
         MOV SI, offset JogadaPossivel ; COmpara se foi uma jogada valida
         cmp byte ptr DS:[SI], 0
         JZ LACO_GAME_LOOP
+        call SOMA_JOGADA
         call ADD_RANDOM
-        
-    loop LACO_GAME_LOOP
-    game_loop_fim_jogo:
+
+    JMP LACO_GAME_LOOP
+    GAME_LOOP_FIM_JOGO:
     POP SI DI CX
+    ret
+endp
+
+
+SOMA_JOGADA proc
+    PUSH SI
+    MOV word ptr SI, offset JogadaLocal
+    INC word ptr [SI]
+    POP SI
     ret
 endp
 
@@ -143,29 +167,31 @@ PROCESSAR_JOGADA PROC
    proc_jogada_direita:
        call TESTA_MOVIMENTO_DIREITA
        cmp byte ptr DS:[DI], 0
-       JZ fim_processar_input
+       JZ fim_processar_sem_jogar
        call MOVIMENTO_DIREITA
        jmp fim_processar_input
    proc_jogada_esquerda:
        call TESTA_MOVIMENTO_ESQUERDA
        cmp byte ptr DS:[DI], 0
-       JZ fim_processar_input
+       JZ fim_processar_sem_jogar
        call MOVIMENTO_ESQUERDA
        jmp fim_processar_input
    proc_jogada_baixo:
        call TEST_MOVIMENTO_BAIXO
        cmp byte ptr DS:[DI], 0
-       JZ fim_processar_input
+       JZ fim_processar_sem_jogar
        call MOVIMENTO_BAIXO
        jmp fim_processar_input
    proc_jogada_cima:
        call TESTA_MOVIMENTO_CIMA
        cmp byte ptr DS:[DI], 0
-       JZ fim_processar_input
+       JZ fim_processar_sem_jogar
        call MOVIMENTO_CIMA
        jmp fim_processar_input
    fim_processar_input:
    ; Soma uma jogada possivel
+   MOV DI, offset JogadaLocal
+   fim_processar_sem_jogar:
    POP DI
    POP BX
    POP AX

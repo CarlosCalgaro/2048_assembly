@@ -8,10 +8,10 @@
 
 .data
     
-    Tabuleiro dw  1,2,3,4,05,06,07,08,09,10,11,12,13,0,0,0 ;1024,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15      ;4 DUP( 4 DUP(0H));0FFFH,0BCDH,0AAAH,12357,51511,61353,7,8,9,10,11,12,13,14,15,163
+    Tabuleiro dw  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ;1024,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15      ;4 DUP( 4 DUP(0H));0FFFH,0BCDH,0AAAH,12357,51511,61353,7,8,9,10,11,12,13,14,15,163
     String db 80
     TelaInicial db '2048','$','Jogar 2048','$','Recordes','$','Automatico','$','Sair','$','Autores: Carlos Calgaro e Eduardo Spinelli', '$' ; DEPENDENCIA DA tela.asm
-    NumeroAleartorio dw 3
+    NumeroAleartorio dw 8
     ScoreLocal dw 0
     TelaJogo db 'ESCORE ','$','JOGADAS ','$','MELHOR ','$','2048','$'
     TelaRecords db 'RECORDS','$'
@@ -19,7 +19,7 @@
     JogadaPossivel db '0' ; Variavel que seta se jogada ? possivel, 0 ? invalido, 1 ? valido
     VitoriaLocal db 0 ; Variavel que seta status do jogo, se 0, jogo vigente, se 1, jogo ganho(Atingiu 2048), se 2, Jogo Perdido
     JogadaLocal dw 0 ;Armazena o numero de jogadas do usu?rio
-    ModoAutomatico db 0
+    ModoAutomatico db 1
 .code
    include basico.asm
    include contr.asm
@@ -33,10 +33,8 @@
         MOV AX, 13H ;TROCA PARA MODO GRAFICO
         INT 10H
         
-        call PROCESSAR_INPUT
-        
+        call TELA_AUTOMATICO
         MOV DI, offset Tabuleiro
-        
         MOV AX, 04C00H ;DESLIGA O PROGRAMA E RETORNA STATUS 0
         INT 21h    
     end main 

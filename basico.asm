@@ -19,7 +19,46 @@
     POP DX CX BX AX
     ret
    ENDP
-    
+   
+    ESC_CHAR proc  
+        push AX
+        mov AH, 02h
+        int 21h 
+        pop AX  
+        ret
+    endp 
+
+   
+   ESC_UINT16 proc 
+        push AX
+        push BX
+        push CX
+        push DX
+        
+        xor CX, CX
+        mov BX, 10
+                                                 
+    DECOMPOE:
+        xor DX, DX                                         
+        div BX      ; AX <- DXAX/BX e DX <- Resto 
+        add DL, '0'
+        push DX      
+        inc CX
+        and  AX,AX
+        jnz  DECOMPOE
+    DESEMPILHA_CHAR:    
+        pop DX
+        call ESC_CHAR 
+        loop DESEMPILHA_CHAR  ; dec CX e jnz DESEMPILHA_CHAR
+        
+        pop DX    ; restaurar o valor dos registradores salvos
+        pop CX
+        pop BX
+        pop AX
+        
+        ret
+    endp    
+
     UINT16_STR proc 
             ; TRANSFORMA UM NUMERO DE 16 BITS EM STRING
             ;SI recebe o LUGAR PARA RETORNO 
@@ -28,7 +67,7 @@
             PUSH DX
             PUSH BX
             PUSH AX
-            
+            MOV SI, offset String
             MOV BX,10      
             MOV byte ptr 80[SI],'$'
             LEA SI,[SI+80]
@@ -47,18 +86,23 @@
             POP DX
             ret
    endp
-      
+   
    ESC_MATRIZ proc
        ; ESCREVE A MATRIZ 4X4 PARA VISUALIZAR
        ; DI OFFSET DA MATRIZ
        ; SI OFFSET DE STRING
+        PUSH CX BX
+        push DI
+        MOV DI, offset Tabuleiro
+        
         MOV CX,16
+        XOR BX, BX
+        ESC_MATRIZ_LOOP:
+            MOV AX, DS:[DI][BX]
 
-        MOV BX, DI
-        INICIO_1:
-            push dx
-            push ax
-            push bx
+            PUSH AX BX DX
+                CMP CX, 16
+                JZ NO_NEW_LINE
                 XOR DX, DX
                 mov BX, 4
                 mov ax, cx
@@ -66,19 +110,14 @@
                 cmp dx, 0
                 jnz no_new_line
                 call NEW_LINE
-            no_new_line:
-            pop bx
-            pop ax
-            pop dx
-            
-            MOV AX, [BX]
-            ADD BX, 2
-            MOV si, offset String
-            call UINT16_STR
-            call ESC_STR
+                no_new_line:
+            POP DX BX AX
+            CALL ESC_UINT16
             CALL M_WHITE_SPACE
-           
-        loop INICIO_1
+            ADD BX, 2
+        loop ESC_MATRIZ_LOOP
+        pop DI
+        POP BX CX
         ret
    endp
    
@@ -156,7 +195,7 @@
         push ax
         push di
         xor cx,cx
-        xor ax,ax
+        MOV AX, '$'
         not cx
         cld
         repne scasb
@@ -191,9 +230,53 @@
         pop AX
       ret
     endp
+LER_UINT16 proc ; proc retorna em AX o valor lido do teclado
+    push BX
+    push CX
+    push DX
+  
+    xor AX, AX
+    xor BX, BX 
+    mov CX, 10  
     
-    ESC_INFO proc
-    ret
-    endp
+LACO: 
+    push AX 
+LEITURA:        
+    mov AH, 07h
+    int 21h 
+    cmp AL, 13
+    jz FINAL
+     
+    cmp AL, '0' ; Verifica se eh valido 
+    jb LEITURA
+    cmp AL, '9'
+    ja LEITURA ; Verifica se eh valido
+    
+    mov DL, AL
 
+    call ESC_CHAR
+             
+    sub AL, '0'; Transformou o caractere em um digito
+    mov BL, AL ; Salvando o digito em BL
     
+    pop AX
+    
+    mul CX 
+    add AX, BX 
+    
+    jmp LACO 
+    
+FINAL:  
+    pop AX    ; Agora o AX tem o resultado da leitura   
+    
+    mov DL, 10
+    call ESC_CHAR
+    mov DL, 13
+    call ESC_CHAR
+    
+    pop DX    ; restaurar o valor dos registradores salvos
+    pop CX
+    pop BX
+   
+    ret 
+endp

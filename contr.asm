@@ -80,6 +80,13 @@ MERGE proc
     MOV CX, [BX]
     ADD CX, [SI]
     MOV [BX], CX
+   
+    
+    MOV DI, offset ModoAutomatico
+    CMP byte ptr DS:[DI], 1
+    JNZ MERGE_MODO_NORMAL
+    call SALVA_JOGADA_AUTOMATICO
+    MERGE_MODO_NORMAL:
     
     CMP DS:[SI], 2048
     JNZ merge_fim_proc
@@ -87,7 +94,7 @@ MERGE proc
     merge_fim_jogo:
     MOV BX, offset VitoriaLocal
     MOV CX, 1
-    MOV [BX], CX
+    MOV [BX], CL
     merge_fim_proc:
     pop CX
     pop BX
@@ -97,42 +104,103 @@ MERGE proc
 endp
 
 
-GAME_LOOP proc
-    PUSH CX DI SI
-    MOV DI, offset Tabuleiro
+NOVO_JOGO proc
+    PUSH AX CX
+    PUSH SI
+    
+    mov SI, offset ModoAutomatico
+    XOR AX, AX
+    MOV DS:[SI], AL
+    MOV SI, offset JogadaLocal
+    MOV DS:[SI], AX
+    MOV SI, offset JogadaPossivel
+    MOV DS:[SI], AL
+    MOV SI, offset VitoriaLocal
+    MOV DS:[SI], AL
+    MOV SI, offset ScoreLocal
+    MOV DS:[SI], AX
+    MOV SI, offset Tabuleiro
+    MOV CX, 16
+    limpa_matriz:
+        MOV word ptr DS:[SI], 0
+        add SI, 2
+    loop limpa_matriz
+    POP SI
+    POP CX AX
+endp
 
+CONDICAO_VITORIA proc
+    PUSH CX
+    PUSH SI
+    MOV SI, offset Tabuleiro
+    MOV CX, 16
+    condicao_vitoria_laco:
+        CMP word ptr DS:[SI], 0 
+        JE condicao_vitoria_retorno
+        ADD SI, 2
+    loop condicao_vitoria_laco 
+    
+    MOV SI, offset VitoriaLocal
+    MOV CX, 2
+    MOV DS:[SI], CL   
+    condicao_vitoria_retorno:
+    POP SI
+    POP CX
+    ret
+endp
+
+GAME_LOOP proc
+    PUSH AX CX DI SI
+    MOV DI, offset Tabuleiro
+    CALL ADD_RANDOM
+    CALL ADD_RANDOM
     LACO_GAME_LOOP:
+        
+        
         call CLEAR_SCREEN
+       
+        
         call ESC_MATRIZ
+        call WRITE_GAME_INFO
+             
         MOV SI, offset VitoriaLocal
         CMP byte ptr DS:[SI], 1
-        JZ GAME_LOOP_FIM_JOGO
-        
+        JZ GAME_LOOP_FIM_JOGO    
         CMP byte ptr DS:[SI], 2
         JZ GAME_LOOP_FIM_JOGO
-        
-        call ESC_GRAPH_MAT
-        call ESC_INFO
+
+        ; ----------------
         MOV SI, offset ModoAutomatico
         CMP byte ptr DS:[SI], 1
-        JZ GAME_LOOP_AUTOMATICO
-        call PROCESSAR_JOGADA
-        JMP GAME_LOOP_DPS_JOGADA
-        
-        GAME_LOOP_AUTOMATICO:
+        JNE GAME_LOOP_INPUT
         call JOGAR_AUTOMATICO
+        JMP GAME_LOOP_POS_JOGADA
         
-        GAME_LOOP_DPS_JOGADA:
+        GAME_LOOP_INPUT:
+        call PROCESSAR_JOGADA
+        GAME_LOOP_POS_JOGADA:
+        
         
         MOV SI, offset JogadaPossivel ; COmpara se foi uma jogada valida
         cmp byte ptr DS:[SI], 0
-        JZ LACO_GAME_LOOP
+        JE GAME_LOOP_TESTE_DERROTA
+        
         call SOMA_JOGADA
         call ADD_RANDOM
-
+        JMP LACO_GAME_LOOP
+        
+        GAME_LOOP_TESTE_DERROTA:
+        
+        call CONDICAO_VITORIA
+        
     JMP LACO_GAME_LOOP
     GAME_LOOP_FIM_JOGO:
-    POP SI DI CX
+    MOV SI, offset ModoAutomatico
+    CMP byte ptr [SI], 1
+    JNE GAME_LOOP_RET
+    call DUMP_TOTAL_PLAY_AUTO
+    GAME_LOOP_RET:
+    POP SI DI CX AX
     ret
 endp
 

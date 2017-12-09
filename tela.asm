@@ -144,13 +144,15 @@
     ENDP
   
     TELA_AUTOMATICO PROC
-        MOV SI, offset NumeroSimulacao
-        MOV CX, [SI]
-        
         MOV DI, offset MelhorSimulacao  ;ZERA A MELHOR SIMULA??O
         XOR AX, AX
         MOV CX, 16
         REP STOSW
+        
+        MOV SI, offset NumeroSimulacao
+        MOV CX, [SI]
+        
+       
         
         TELA_AUTOMATICO_SIMULAR:
             MOV SI, offset ModoAutomatico

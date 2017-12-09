@@ -33,8 +33,6 @@
         MOV BL, 9
         call write_string_graphic
         
-        MOV AH, 10h
-        INT 16h
         
         MOV DL, 4
         ADD DH, 4
@@ -53,8 +51,7 @@
             ADD DL, 8
             ADD SI, CX
             INC SI
-            MOV AH, 10h
-            INT 16h
+          
             POP CX
         LOOP WRITE_RECORD_TABLE_HEAD
          
@@ -149,6 +146,12 @@
     TELA_AUTOMATICO PROC
         MOV SI, offset NumeroSimulacao
         MOV CX, [SI]
+        
+        MOV DI, offset MelhorSimulacao  ;ZERA A MELHOR SIMULA??O
+        XOR AX, AX
+        MOV CX, 16
+        REP STOSW
+        
         TELA_AUTOMATICO_SIMULAR:
             MOV SI, offset ModoAutomatico
             MOV AX, 1H
@@ -160,10 +163,12 @@
             call NOVO_JOGO
             CLEAN_LOCAL_SIMULATION
             
-            call PRINT_BEST_SIMULATION
-            MOV AH, 10h
-            INT 16h
+
+
         loop TELA_AUTOMATICO_SIMULAR
+        call PRINT_BEST_SIMULATION
+        MOV AH, 10h
+        INT 16h
         ret
     endp
     

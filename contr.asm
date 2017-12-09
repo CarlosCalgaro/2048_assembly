@@ -140,6 +140,24 @@ CONDICAO_VITORIA proc
         ADD SI, 2
     loop condicao_vitoria_laco 
     
+    ;;;; AQUI
+    MOV DI, offset JogadaPossivel
+    call TESTA_MOVIMENTO_ESQUERDA
+    cmp byte ptr DS:[DI], 0
+    JNZ condicao_vitoria_retorno
+    
+    call TESTA_MOVIMENTO_DIREITA
+    cmp byte ptr DS:[DI], 0
+    JNZ condicao_vitoria_retorno
+    
+    call TESTA_MOVIMENTO_CIMA
+    cmp byte ptr DS:[DI], 0
+    JNZ condicao_vitoria_retorno
+    
+    call TEST_MOVIMENTO_BAIXO
+    cmp byte ptr DS:[DI], 0
+    JNZ condicao_vitoria_retorno
+    
     MOV SI, offset VitoriaLocal
     MOV CX, 2
     MOV DS:[SI], CL   
@@ -197,8 +215,11 @@ GAME_LOOP proc
     GAME_LOOP_FIM_JOGO:
     MOV SI, offset ModoAutomatico
     CMP byte ptr [SI], 1
-    JNE GAME_LOOP_RET
+    JNE GAME_LOOP_CMP_SALVA
     call DUMP_TOTAL_PLAY_AUTO
+    JMP GAME_LOOP_RET
+    GAME_LOOP_CMP_SALVA:
+    call CMP_CURRENT_RECORD
     GAME_LOOP_RET:
     POP SI DI CX AX
     ret
